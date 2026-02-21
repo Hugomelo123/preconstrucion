@@ -40,6 +40,8 @@ export const t = {
     choose: "— Choisir —",
     updateStatus: "Mettre à jour l'état",
     updating: "Mise à jour…",
+    call: "Appeler",
+    email: "Envoyer un e-mail",
     pipelineColumn: (id: string) => pipelineColumnTitles.fr[id] ?? id,
   },
   pt: {
@@ -64,6 +66,8 @@ export const t = {
     choose: "— Escolher —",
     updateStatus: "Atualizar Estado",
     updating: "A atualizar…",
+    call: "Ligar",
+    email: "Enviar e-mail",
     pipelineColumn: (id: string) => pipelineColumnTitles.pt[id] ?? id,
   },
 } as const;

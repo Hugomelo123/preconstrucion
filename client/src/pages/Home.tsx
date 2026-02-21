@@ -36,6 +36,17 @@ type Project = {
 
 const PIPELINE_IDS = ["lead", "visite", "devis", "relance", "accepte"] as const;
 
+function statusBadgeClass(status: string): string {
+  const map: Record<string, string> = {
+    lead: "bg-slate-100 text-slate-700 border-slate-200",
+    visite: "bg-blue-50 text-blue-800 border-blue-200",
+    devis: "bg-amber-50 text-amber-800 border-amber-200",
+    relance: "bg-orange-50 text-orange-800 border-orange-200",
+    accepte: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  };
+  return map[status] ?? "bg-slate-100 text-slate-700 border-slate-200";
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("fr");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -234,156 +245,141 @@ export default function Home() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0.5 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl border-l border-slate-200 z-50 overflow-y-auto flex flex-col"
+              className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-50/80 shadow-2xl border-l border-slate-200 z-50 overflow-y-auto flex flex-col"
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
-                <h2 className="text-lg font-semibold text-slate-900">{T.visitSheet}</h2>
+              {/* Header fixo com título do projeto */}
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+                <h2 className="text-base font-semibold text-slate-800 truncate">{T.visitSheet}</h2>
                 <button
-                  onClick={() => {
-                    setNewStatus("");
-                    setSelectedProject(null);
-                  }}
-                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+                  type="button"
+                  onClick={() => { setNewStatus(""); setSelectedProject(null); }}
+                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
+                  aria-label="Fechar"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col gap-8">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 mb-2">{selectedProject.title}</h1>
-                  <div className="text-xl font-semibold text-slate-600 mb-4">
-                    {formatCurrency(selectedProject.value)}
-                  </div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm font-medium">
-                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    {T.pipelineColumn(selectedProject.status)}
-                    <span className="text-slate-400 font-normal ml-2">
-                      ({selectedProject.daysInStatus} {T.days})
+              <div className="p-5 flex-1 flex flex-col gap-6">
+                {/* Título + valor + estado */}
+                <div className="space-y-3">
+                  <h1 className="text-xl font-bold text-slate-900 leading-tight">{selectedProject.title}</h1>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-2xl font-bold text-slate-900">{formatCurrency(selectedProject.value)}</span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadgeClass(selectedProject.status)}`}>
+                      {T.pipelineColumn(selectedProject.status)}
+                      <span className="opacity-80">·</span>
+                      <span className="font-normal">{selectedProject.daysInStatus} {T.days}</span>
                     </span>
                   </div>
                 </div>
 
-                <div className="grid gap-6">
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{T.client}</h3>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-                      <div className="font-medium text-slate-900">{selectedProject.client}</div>
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <Phone className="w-4 h-4 text-slate-400" />
-                        {selectedProject.phone}
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <Mail className="w-4 h-4 text-slate-400" />
-                        {selectedProject.email}
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <MapPin className="w-4 h-4 text-slate-400" />
-                        {selectedProject.location}
-                      </div>
-                    </div>
+                {/* Cliente + ações de contacto */}
+                <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{T.client}</h3>
+                  <p className="font-semibold text-slate-900 mb-3">{selectedProject.client}</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <a
+                      href={`tel:${selectedProject.phone.replace(/\s/g, "")}`}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                      {T.call}
+                    </a>
+                    <a
+                      href={`mailto:${selectedProject.email}`}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      {T.email}
+                    </a>
                   </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span>{selectedProject.location}</span>
+                  </div>
+                </section>
 
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                      {T.specs}
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex gap-3">
-                        <Hammer className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                        <div>
-                          <div className="text-sm font-medium text-slate-900">{T.workType}</div>
-                          <div className="text-sm text-slate-600 mt-1">{selectedProject.type}</div>
+                {/* Especificações */}
+                <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm border-l-4 border-l-blue-400">
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">{T.specs}</h3>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex gap-3">
+                      <Hammer className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-medium text-slate-500">{T.workType}</div>
+                        <div className="text-slate-900 mt-0.5">{selectedProject.type}</div>
+                      </div>
+                    </li>
+                    <li className="flex gap-3">
+                      <FileText className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-medium text-slate-500">{T.measures}</div>
+                        <div className="text-slate-700 mt-0.5 leading-relaxed">{selectedProject.measures}</div>
+                      </div>
+                    </li>
+                    <li className="flex gap-3">
+                      <Calendar className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-medium text-slate-500">{T.expectedQuoteDate}</div>
+                        <div className="text-slate-900 mt-0.5">{selectedProject.expectedQuoteDate}</div>
+                      </div>
+                    </li>
+                  </ul>
+                </section>
+
+                {/* Observações */}
+                <section className="rounded-xl border border-amber-200/60 bg-amber-50/60 p-4">
+                  <h3 className="text-xs font-semibold text-amber-700/80 uppercase tracking-wider mb-2">{T.notes}</h3>
+                  <p className="text-sm text-slate-700 leading-relaxed">{selectedProject.notes}</p>
+                </section>
+
+                {/* Fotos */}
+                <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{T.visitPhotos}</h3>
+                    <button type="button" className="text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                      {T.add}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(selectedProject.photoUrls?.length ? selectedProject.photoUrls : [null, null]).map((url, i) =>
+                      url ? (
+                        <div key={i} className="aspect-square rounded-lg border border-slate-200 overflow-hidden bg-slate-100">
+                          <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <FileText className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                        <div>
-                          <div className="text-sm font-medium text-slate-900">{T.measures}</div>
-                          <div className="text-sm text-slate-600 mt-1 leading-relaxed">
-                            {selectedProject.measures}
-                          </div>
+                      ) : (
+                        <div key={i} className="aspect-square rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-1 text-slate-400">
+                          <Camera className="w-8 h-8" />
+                          <span className="text-xs">{T.add}</span>
                         </div>
-                      </div>
-                      <div className="flex gap-3">
-                        <Calendar className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                        <div>
-                          <div className="text-sm font-medium text-slate-900">{T.expectedQuoteDate}</div>
-                          <div className="text-sm text-slate-600 mt-1">
-                            {selectedProject.expectedQuoteDate}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      )
+                    )}
                   </div>
+                </section>
 
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                      {T.notes}
-                    </h3>
-                    <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 text-sm text-slate-700 leading-relaxed">
-                      {selectedProject.notes}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                      {T.visitPhotos}
-                      <button
-                        type="button"
-                        className="text-blue-600 hover:text-blue-700 normal-case text-xs font-medium bg-blue-50 px-2 py-1 rounded"
-                      >
-                        {T.add}
-                      </button>
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {(selectedProject.photoUrls?.length
-                        ? selectedProject.photoUrls
-                        : [null, null]
-                      ).map((url, i) =>
-                        url ? (
-                          <div
-                            key={i}
-                            className="aspect-square rounded-lg border border-slate-200 bg-slate-100 overflow-hidden"
-                          >
-                            <img src={url} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <div
-                            key={i}
-                            className="aspect-square bg-slate-100 rounded-lg border border-slate-200 border-dashed flex items-center justify-center text-slate-400"
-                          >
-                            <Camera className="w-6 h-6" />
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-6 border-t border-slate-100 pb-8 space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">{T.newStatus}</label>
+                {/* Atualizar estado */}
+                <section className="mt-2 pt-5 border-t border-slate-200 space-y-3 pb-6">
+                  <label className="block text-sm font-semibold text-slate-700">{T.newStatus}</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
                   >
                     <option value="">{T.choose}</option>
                     {PIPELINE_IDS.map((id) => (
-                      <option key={id} value={id}>
-                        {T.pipelineColumn(id)}
-                      </option>
+                      <option key={id} value={id}>{T.pipelineColumn(id)}</option>
                     ))}
                   </select>
                   <button
                     type="button"
                     onClick={handleUpdateStatus}
                     disabled={!newStatus || updateProjectMutation.isPending}
-                    className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none text-white font-medium py-3 rounded-xl transition-colors shadow-sm"
+                    className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm"
                   >
                     {updateProjectMutation.isPending ? T.updating : T.updateStatus}
                   </button>
-                </div>
+                </section>
               </div>
             </motion.div>
           </>
