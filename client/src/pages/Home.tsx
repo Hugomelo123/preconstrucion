@@ -205,8 +205,8 @@ export default function Home() {
       </header>
 
       {/* 2. Middle Section - Pipeline */}
-      <main className="max-w-[1600px] mx-auto px-6 py-8 overflow-x-auto">
-        <div className="flex gap-6 min-w-max pb-8">
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
+        <div className="flex gap-6 pb-8 overflow-x-auto">
           {PIPELINE_COLUMNS.map((column) => {
             const columnProjects = PROJECTS.filter(p => p.status === column.id);
             const totalValue = columnProjects.reduce((sum, p) => sum + p.value, 0);
