@@ -1,85 +1,63 @@
 # preconstrucion
 
-Aplicação para acompanhar o pipeline de pré-construção: leads, visitas técnicas, devis enviados, relances e projetos aceites. Inclui KPIs (valor pendente, valor sem resposta >14 dias) e fichas de visita com possibilidade de atualizar o estado de cada projeto.
+Pre-construction pipeline tracker: manage leads, technical visits, sent quotes, follow-ups and accepted projects. Includes KPIs (pending value, no-reply >14 days) and visit sheets with status updates. **Demo UI is available in French (FR) and Portuguese (PT)** via the language switcher in the header.
 
 ---
 
-## O que está implementado
+## What's implemented
 
 ### Frontend (React + Vite)
 
-- **Página principal (Home)**  
-  - Header com 3 KPIs calculados a partir dos dados da API:
-    - **Devis Pendentes** – soma do valor de todos os projetos que ainda não estão em "Accepté".
-    - **Sem resposta > 14 dias** – soma do valor dos projetos há mais de 14 dias no mesmo estado.
-    - **Tempo médio envio devis** – valor fixo (6 dias), reservado para evolução futura.
-  - **Pipeline em colunas** (Kanban): Nouveau Lead → Visite Technique → Devis Envoyé → Relance Client → Accepté.
-  - **Cards de projeto** por coluna (cliente, título, valor); projetos com >14 dias no estado são destacados (alerta).
-  - **Ficha de Visita** (painel lateral ao clicar num projeto):
-    - Dados do cliente, especificações, observações.
-    - Placeholder para fotos da visita (campo `photoUrls` já existe no modelo).
-    - **Atualizar Estado**: seleção do novo estado + botão que envia `PATCH /api/projects/:id` e atualiza a lista.
-
-- **Dados**: vêm da API (`GET /api/projects`). React Query para fetching e invalidação após atualização.
+- **Home page**
+  - **Language**: FR / PT switcher; all labels, KPIs and panel copy follow the selected language.
+  - **Header** with 3 KPIs from API data:
+    - **Pending quotes** – sum of project values not yet in "Accepted".
+    - **No reply > 14 days** – sum of values for projects in the same status for more than 14 days.
+    - **Average quote send time** – fixed value (6 days), reserved for future use.
+  - **Pipeline columns** (Kanban): New Lead → Technical Visit → Quote Sent → Client Follow-up → Accepted (titles in FR or PT).
+  - **Project cards** per column (client, title, value); projects >14 days in status are highlighted.
+  - **Visit sheet** (side panel on card click): client details, specs, notes, photo placeholders, **Update status** (new status select + PATCH to API).
+- **Data** from `GET /api/projects`; React Query for fetch and cache invalidation after updates.
 
 ### Backend (Express)
 
-- **API de projetos** (prefixo `/api`):
-  - `GET /api/projects` – lista todos os projetos.
-  - `GET /api/projects/:id` – um projeto.
-  - `POST /api/projects` – criar projeto (body validado com Zod).
-  - `PATCH /api/projects/:id` – atualizar projeto (ex.: mudar `status` e reiniciar `daysInStatus`).
-
-- **Schema partilhado** (`shared/schema.ts`):
-  - Tabela `projects`: id, title, client, value, status, daysInStatus, type, location, phone, email, measures, notes, expectedQuoteDate, photoUrls (array de URLs).
-  - Constante `PROJECT_STATUSES` e tipos `Project`, `InsertProject`, `UpdateProject`.
-  - Tabela `users` mantida para futura autenticação.
-
-- **Storage**: em memória (`MemStorage`) com seed de 7 projetos de exemplo. Pronto para trocar por persistência (ex.: Drizzle + PostgreSQL) mantendo a mesma interface.
-
-### Conclusões
-
-| Área              | Estado |
-|-------------------|--------|
-| **Projetos**      | CRUD completo (API + frontend). Dados em memória com seed. |
-| **KPIs**          | Dois primeiros calculados a partir da API; o terceiro ainda fixo. |
-| **Atualizar estado** | Funcional: seleção de novo estado + PATCH; lista e painel atualizam. |
-| **Fotos da visita**   | Campo `photoUrls` no modelo; UI com placeholders; upload não implementado. |
-| **Base de dados**    | Schema Drizzle definido; `db:push` configurado; em runtime usa memória. |
-| **Autenticação**     | Schema e storage de users existem; login/registro e proteção de rotas não implementados. |
+- **Projects API** (prefix `/api`):
+  - `GET /api/projects` – list all.
+  - `GET /api/projects/:id` – one project.
+  - `POST /api/projects` – create (Zod-validated body).
+  - `PATCH /api/projects/:id` – update (e.g. status and reset `daysInStatus`).
+- **Shared schema** (`shared/schema.ts`): `projects` table and `users` for future auth; Drizzle + Zod.
+- **Storage**: in-memory with seed data; can be swapped for Drizzle + PostgreSQL.
 
 ---
 
-## Como correr
+## How to run
 
-1. **Instalar dependências**
+1. **Install**
    ```bash
    npm install
    ```
 
-2. **Modo desenvolvimento** (cliente + servidor, uma porta)
+2. **Development**
    ```bash
    npm run dev
    ```
-   Por defeito serve em `http://localhost:5000` (ou na porta definida em `PORT`).
+   Serves at `http://127.0.0.1:5000` (or `PORT` / `HOST` env).
 
-3. **Produção**
+3. **Production**
    ```bash
    npm run build
    npm start
    ```
 
-4. **Base de dados PostgreSQL** (opcional, para persistência)
-   - Definir `DATABASE_URL`.
-   - Correr `npm run db:push` para criar/atualizar tabelas.
-   - Alterar o server para usar um storage que use Drizzle em vez de `MemStorage` para projetos (e, se quiser, para users).
+4. **PostgreSQL** (optional): set `DATABASE_URL`, run `npm run db:push`, then switch server storage to Drizzle.
 
 ---
 
-## Próximos passos sugeridos
+## Next steps
 
-- Persistência: usar Drizzle + PostgreSQL para projetos (e users) em produção.
-- Autenticação: login/registro com Passport e proteção das rotas `/api/projects`.
-- Fotos: upload de imagens (ex.: para um storage ou bucket) e guardar URLs em `photoUrls`.
-- Tempo médio de envio de devis: campo de data (ex. `quoteSentAt`) e cálculo do KPI a partir dos dados.
-- Atualização automática de `daysInStatus` (ex.: job diário ou cálculo a partir de `statusUpdatedAt`).
+- Persist projects (and users) with Drizzle + PostgreSQL.
+- Auth: login/register with Passport and protect `/api/projects`.
+- Photo upload and store URLs in `photoUrls`.
+- Compute average quote send time from a date field (e.g. `quoteSentAt`).
+- Auto-update `daysInStatus` (e.g. from `statusUpdatedAt`).

@@ -15,8 +15,8 @@ import {
   X,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { type Lang, t } from "@/lib/i18n";
 
-// Tipo alinhado à API
 type Project = {
   id: string;
   title: string;
@@ -34,18 +34,14 @@ type Project = {
   photoUrls?: string[];
 };
 
-const PIPELINE_COLUMNS = [
-  { id: "lead", title: "Nouveau Lead" },
-  { id: "visite", title: "Visite Technique" },
-  { id: "devis", title: "Devis Envoyé" },
-  { id: "relance", title: "Relance Client" },
-  { id: "accepte", title: "Accepté" },
-];
+const PIPELINE_IDS = ["lead", "visite", "devis", "relance", "accepte"] as const;
 
 export default function Home() {
+  const [lang, setLang] = useState<Lang>("fr");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const queryClient = useQueryClient();
+  const T = t[lang];
 
   const { data: projects = [], isLoading, error } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
@@ -67,7 +63,7 @@ export default function Home() {
   });
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("fr-FR", {
+    return new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "pt-PT", {
       style: "currency",
       currency: "EUR",
       maximumFractionDigits: 0,
@@ -89,7 +85,7 @@ export default function Home() {
   if (error) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <p className="text-rose-600">Erro ao carregar projetos. Verifique a ligação ao servidor.</p>
+        <p className="text-rose-600">{T.errorLoad}</p>
       </div>
     );
   }
@@ -100,15 +96,31 @@ export default function Home() {
         <div className="max-w-[1600px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
-              Pre-Construction Tracker
+              {T.appTitle}
             </h1>
+            <div className="flex gap-1 rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setLang("fr")}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${lang === "fr" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              >
+                FR
+              </button>
+              <button
+                type="button"
+                onClick={() => setLang("pt")}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${lang === "pt" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              >
+                PT
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-xl p-6 border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
               <div className="flex items-center gap-3 text-slate-500 mb-3">
                 <Euro className="w-5 h-5 text-slate-400" />
-                <span className="text-sm font-medium uppercase tracking-wider">Devis Pendentes</span>
+                <span className="text-sm font-medium uppercase tracking-wider">{T.kpiPending}</span>
               </div>
               <div className="text-4xl font-bold text-slate-900 tracking-tight">
                 {isLoading ? "—" : formatCurrency(pendingValue)}
@@ -119,7 +131,7 @@ export default function Home() {
               <div className="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>
               <div className="flex items-center gap-3 text-rose-600 mb-3">
                 <AlertCircle className="w-5 h-5" />
-                <span className="text-sm font-medium uppercase tracking-wider">Sem resposta &gt; 14 dias</span>
+                <span className="text-sm font-medium uppercase tracking-wider">{T.kpiNoReply}</span>
               </div>
               <div className="text-4xl font-bold text-slate-900 tracking-tight">
                 {isLoading ? "—" : formatCurrency(delayedValue)}
@@ -129,10 +141,10 @@ export default function Home() {
             <div className="bg-white rounded-xl p-6 border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
               <div className="flex items-center gap-3 text-slate-500 mb-3">
                 <Clock className="w-5 h-5 text-slate-400" />
-                <span className="text-sm font-medium uppercase tracking-wider">Tempo médio envio devis</span>
+                <span className="text-sm font-medium uppercase tracking-wider">{T.kpiAvgDays}</span>
               </div>
               <div className="text-4xl font-bold text-slate-900 tracking-tight flex items-baseline gap-2">
-                6 <span className="text-xl font-medium text-slate-500">dias</span>
+                6 <span className="text-xl font-medium text-slate-500">{T.days}</span>
               </div>
             </div>
           </div>
@@ -141,18 +153,19 @@ export default function Home() {
 
       <main className="max-w-[1600px] mx-auto px-6 py-8">
         {isLoading ? (
-          <p className="text-slate-500">A carregar projetos…</p>
+          <p className="text-slate-500">{T.loading}</p>
         ) : (
           <div className="flex gap-6 pb-8 overflow-x-auto">
-            {PIPELINE_COLUMNS.map((column) => {
-              const columnProjects = projects.filter((p) => p.status === column.id);
+            {PIPELINE_IDS.map((columnId) => {
+              const columnProjects = projects.filter((p) => p.status === columnId);
               const totalValue = columnProjects.reduce((sum, p) => sum + p.value, 0);
+              const columnTitle = T.pipelineColumn(columnId);
 
               return (
-                <div key={column.id} className="w-[320px] flex-shrink-0 flex flex-col">
+                <div key={columnId} className="w-[320px] flex-shrink-0 flex flex-col">
                   <div className="flex items-center justify-between mb-4 px-1">
                     <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
-                      {column.title}
+                      {columnTitle}
                     </h2>
                     <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
                       {formatCurrency(totalValue)}
@@ -182,7 +195,7 @@ export default function Home() {
                             {isDelayed && (
                               <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
                                 <Clock className="w-3 h-3" />
-                                {project.daysInStatus}d
+                                {project.daysInStatus}{T.daysShort}
                               </span>
                             )}
                           </div>
@@ -224,7 +237,7 @@ export default function Home() {
               className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl border-l border-slate-200 z-50 overflow-y-auto flex flex-col"
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
-                <h2 className="text-lg font-semibold text-slate-900">Ficha de Visita</h2>
+                <h2 className="text-lg font-semibold text-slate-900">{T.visitSheet}</h2>
                 <button
                   onClick={() => {
                     setNewStatus("");
@@ -244,16 +257,16 @@ export default function Home() {
                   </div>
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm font-medium">
                     <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    {PIPELINE_COLUMNS.find((c) => c.id === selectedProject.status)?.title}
+                    {T.pipelineColumn(selectedProject.status)}
                     <span className="text-slate-400 font-normal ml-2">
-                      ({selectedProject.daysInStatus} dias)
+                      ({selectedProject.daysInStatus} {T.days})
                     </span>
                   </div>
                 </div>
 
                 <div className="grid gap-6">
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Cliente</h3>
+                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{T.client}</h3>
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
                       <div className="font-medium text-slate-900">{selectedProject.client}</div>
                       <div className="flex items-center gap-3 text-sm text-slate-600">
@@ -273,20 +286,20 @@ export default function Home() {
 
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                      Especificações
+                      {T.specs}
                     </h3>
                     <div className="space-y-4">
                       <div className="flex gap-3">
                         <Hammer className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
                         <div>
-                          <div className="text-sm font-medium text-slate-900">Tipo de obra</div>
+                          <div className="text-sm font-medium text-slate-900">{T.workType}</div>
                           <div className="text-sm text-slate-600 mt-1">{selectedProject.type}</div>
                         </div>
                       </div>
                       <div className="flex gap-3">
                         <FileText className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
                         <div>
-                          <div className="text-sm font-medium text-slate-900">Medidas & Quantidades</div>
+                          <div className="text-sm font-medium text-slate-900">{T.measures}</div>
                           <div className="text-sm text-slate-600 mt-1 leading-relaxed">
                             {selectedProject.measures}
                           </div>
@@ -295,7 +308,7 @@ export default function Home() {
                       <div className="flex gap-3">
                         <Calendar className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
                         <div>
-                          <div className="text-sm font-medium text-slate-900">Data Prevista Devis</div>
+                          <div className="text-sm font-medium text-slate-900">{T.expectedQuoteDate}</div>
                           <div className="text-sm text-slate-600 mt-1">
                             {selectedProject.expectedQuoteDate}
                           </div>
@@ -306,7 +319,7 @@ export default function Home() {
 
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                      Observações
+                      {T.notes}
                     </h3>
                     <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100/50 text-sm text-slate-700 leading-relaxed">
                       {selectedProject.notes}
@@ -315,12 +328,12 @@ export default function Home() {
 
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                      Fotos da Visita
+                      {T.visitPhotos}
                       <button
                         type="button"
                         className="text-blue-600 hover:text-blue-700 normal-case text-xs font-medium bg-blue-50 px-2 py-1 rounded"
                       >
-                        Adicionar
+                        {T.add}
                       </button>
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -349,16 +362,16 @@ export default function Home() {
                 </div>
 
                 <div className="mt-4 pt-6 border-t border-slate-100 pb-8 space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Novo estado</label>
+                  <label className="block text-sm font-medium text-slate-700">{T.newStatus}</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                   >
-                    <option value="">— Escolher —</option>
-                    {PIPELINE_COLUMNS.map((col) => (
-                      <option key={col.id} value={col.id}>
-                        {col.title}
+                    <option value="">{T.choose}</option>
+                    {PIPELINE_IDS.map((id) => (
+                      <option key={id} value={id}>
+                        {T.pipelineColumn(id)}
                       </option>
                     ))}
                   </select>
@@ -368,7 +381,7 @@ export default function Home() {
                     disabled={!newStatus || updateProjectMutation.isPending}
                     className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none text-white font-medium py-3 rounded-xl transition-colors shadow-sm"
                   >
-                    {updateProjectMutation.isPending ? "A atualizar…" : "Atualizar Estado"}
+                    {updateProjectMutation.isPending ? T.updating : T.updateStatus}
                   </button>
                 </div>
               </div>
