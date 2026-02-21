@@ -225,21 +225,22 @@ export default function Home() {
                     const isDelayed = project.daysInStatus > 14;
                     
                     return (
-                      <motion.div
-                        layoutId={project.id}
+                      <div
                         key={project.id}
-                        onClick={() => setSelectedProject(project)}
+                        onClick={() => {
+                          console.log("Clicking project:", project.id);
+                          setSelectedProject(project);
+                        }}
                         className={`
                           bg-white p-5 rounded-xl border cursor-pointer
                           transition-all duration-200 hover:shadow-md
+                          relative z-20
                           ${isDelayed 
                             ? 'border-rose-200 shadow-[0_2px_10px_-3px_rgba(225,29,72,0.1)]' 
                             : 'border-slate-200 shadow-sm hover:border-slate-300'}
                         `}
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.98 }}
                       >
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-start mb-2 pointer-events-none">
                           <span className="text-sm font-medium text-slate-500">{project.client}</span>
                           {isDelayed && (
                             <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
@@ -248,11 +249,11 @@ export default function Home() {
                             </span>
                           )}
                         </div>
-                        <h3 className="text-base font-semibold text-slate-900 mb-3">{project.title}</h3>
-                        <div className="text-lg font-bold text-slate-700 tracking-tight">
+                        <h3 className="text-base font-semibold text-slate-900 mb-3 pointer-events-none">{project.title}</h3>
+                        <div className="text-lg font-bold text-slate-700 tracking-tight pointer-events-none">
                           {formatCurrency(project.value)}
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
