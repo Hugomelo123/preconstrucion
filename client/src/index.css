@@ -110,3 +110,19 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Safe area para telemóveis (notch, home indicator) */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Scroll suave no iOS para o pipeline horizontal */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}

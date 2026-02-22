@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { type Lang, t } from "@/lib/i18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Project = {
   id: string;
@@ -67,10 +68,13 @@ const ProjectCard = memo(function ProjectCard({
   return (
     <div
       onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
       className={`
-        bg-white p-5 rounded-xl border cursor-pointer
-        transition-all duration-200 hover:shadow-md
-        relative z-20
+        bg-white p-4 sm:p-5 rounded-xl border cursor-pointer
+        transition-all duration-200 hover:shadow-md active:scale-[0.99]
+        relative z-20 touch-manipulation min-h-[72px]
         ${isDelayed ? "border-rose-200 shadow-[0_2px_10px_-3px_rgba(225,29,72,0.1)]" : "border-slate-200 shadow-sm hover:border-slate-300"}
       `}
     >
@@ -90,6 +94,7 @@ const ProjectCard = memo(function ProjectCard({
 });
 
 export default function Home() {
+  const isMobile = useIsMobile();
   const [lang, setLang] = useState<Lang>("fr");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
@@ -162,32 +167,32 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-[1600px] mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-slate-200 min-h-[100dvh]">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 safe-top">
+        <div className="max-w-[1600px] mx-auto px-4 py-4 sm:px-6 sm:py-6">
+          <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+            <h1 className="text-lg sm:text-xl font-semibold text-slate-800 tracking-tight truncate min-w-0">
               {T.appTitle}
             </h1>
-            <div className="flex gap-1 rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+            <div className="flex gap-0.5 rounded-lg border border-slate-200 p-0.5 bg-slate-50 shrink-0">
               <button
                 type="button"
                 onClick={() => setLang("fr")}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${lang === "fr" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`min-h-[44px] min-w-[44px] sm:min-w-0 sm:px-3 sm:py-1.5 text-sm font-medium rounded-md transition-colors touch-manipulation ${lang === "fr" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
                 FR
               </button>
               <button
                 type="button"
                 onClick={() => setLang("pt")}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${lang === "pt" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`min-h-[44px] min-w-[44px] sm:min-w-0 sm:px-3 sm:py-1.5 text-sm font-medium rounded-md transition-colors touch-manipulation ${lang === "pt" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
                 PT
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-white rounded-xl p-6 border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
               <div className="flex items-center gap-3 text-slate-500 mb-3">
                 <Euro className="w-5 h-5 text-slate-400" />
@@ -222,13 +227,13 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-6 py-8">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8 safe-bottom">
         {isLoading ? (
           <p className="text-slate-500">{T.loading}</p>
         ) : (
-          <div className="flex gap-6 pb-8 overflow-x-auto">
+          <div className="flex gap-4 sm:gap-6 pb-6 sm:pb-8 overflow-x-auto snap-x snap-mandatory">
             {columnsData.map(({ columnId, columnProjects, totalValue, columnTitle }) => (
-              <div key={columnId} className="w-[320px] flex-shrink-0 flex flex-col">
+              <div key={columnId} className="w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] flex-shrink-0 flex flex-col snap-center">
                 <div className="flex items-center justify-between mb-4 px-1">
                   <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{columnTitle}</h2>
                   <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
@@ -265,22 +270,29 @@ export default function Home() {
                 setNewStatus("");
                 setSelectedProject(null);
               }}
-              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40"
+              className={`fixed inset-0 bg-slate-900/30 z-40 touch-manipulation ${isMobile ? "" : "backdrop-blur-sm"}`}
             />
             <motion.div
-              initial={{ x: "100%", opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0.5 }}
+              initial={isMobile ? { y: "100%" } : { x: "100%", opacity: 0.5 }}
+              animate={isMobile ? { y: 0 } : { x: 0, opacity: 1 }}
+              exit={isMobile ? { y: "100%" } : { x: "100%", opacity: 0.5 }}
               transition={panelTransition}
-              className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-50/80 shadow-2xl border-l border-slate-200 z-50 overflow-y-auto flex flex-col"
+              className={`
+                fixed z-50 flex flex-col overflow-y-auto
+                bg-slate-50/95 shadow-2xl
+                ${isMobile
+                  ? "inset-x-0 bottom-0 top-auto max-h-[90dvh] rounded-t-2xl border-t border-slate-200 safe-bottom"
+                  : "top-0 right-0 h-full w-full max-w-md border-l border-slate-200"
+                }
+              `}
             >
-              {/* Header fixo com título do projeto */}
-              <div className="sticky top-0 z-10 flex items-center justify-between gap-4 p-4 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-                <h2 className="text-base font-semibold text-slate-800 truncate">{T.visitSheet}</h2>
+              {/* Header fixo */}
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 p-4 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm rounded-t-2xl">
+                <h2 className="text-base font-semibold text-slate-800 truncate min-w-0">{T.visitSheet}</h2>
                 <button
                   type="button"
                   onClick={() => { setNewStatus(""); setSelectedProject(null); }}
-                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-slate-100 active:bg-slate-200 text-slate-500 transition-colors shrink-0 touch-manipulation"
                   aria-label="Fechar"
                 >
                   <X className="w-5 h-5" />
@@ -391,7 +403,7 @@ export default function Home() {
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                    className="w-full min-h-[48px] rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 touch-manipulation text-base"
                   >
                     <option value="">{T.choose}</option>
                     {PIPELINE_IDS.map((id) => (
@@ -402,7 +414,7 @@ export default function Home() {
                     type="button"
                     onClick={handleUpdateStatus}
                     disabled={!newStatus || updateProjectMutation.isPending}
-                    className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm"
+                    className="w-full min-h-[48px] bg-slate-900 hover:bg-slate-800 active:bg-slate-700 disabled:opacity-50 disabled:pointer-events-none text-white font-semibold py-3.5 rounded-xl transition-colors shadow-sm touch-manipulation"
                   >
                     {updateProjectMutation.isPending ? T.updating : T.updateStatus}
                   </button>
