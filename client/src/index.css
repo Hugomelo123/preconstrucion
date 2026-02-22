@@ -126,3 +126,9 @@
 .overflow-x-auto {
   -webkit-overflow-scrolling: touch;
 }
+
+/* Colunas fora do ecrã não são pintadas — melhora scroll */
+.pipeline-column {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}

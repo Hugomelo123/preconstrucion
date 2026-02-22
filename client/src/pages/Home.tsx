@@ -37,9 +37,9 @@ type Project = {
 
 const PIPELINE_IDS = ["lead", "visite", "devis", "relance", "accepte"] as const;
 
-// Animações mais rápidas para fluidez (mantém o efeito, reduz duração)
-const overlayTransition = { duration: 0.12 };
-const panelTransition = { type: "tween" as const, duration: 0.2, ease: [0.25, 0.1, 0.25, 1] };
+// Animações curtas e só transform/opacity (GPU) para menos lag
+const overlayTransition = { duration: 0.08 };
+const panelTransition = { type: "tween" as const, duration: 0.18, ease: [0.22, 0.1, 0.22, 1] };
 
 function statusBadgeClass(status: string): string {
   const map: Record<string, string> = {
@@ -57,23 +57,24 @@ const ProjectCard = memo(function ProjectCard({
   isDelayed,
   formattedValue,
   daysShortLabel,
-  onSelect,
+  onSelectId,
 }: {
   project: Project;
   isDelayed: boolean;
   formattedValue: string;
   daysShortLabel: string;
-  onSelect: () => void;
+  onSelectId: (id: string) => void;
 }) {
   return (
     <div
-      onClick={onSelect}
+      onClick={() => onSelectId(project.id)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectId(project.id); } }}
       className={`
         bg-white p-4 sm:p-5 rounded-xl border cursor-pointer
-        transition-all duration-200 hover:shadow-md active:scale-[0.99]
+        transition-[transform,box-shadow] duration-150 ease-out
+        hover:shadow-md active:scale-[0.99]
         relative z-20 touch-manipulation min-h-[72px]
         ${isDelayed ? "border-rose-200 shadow-[0_2px_10px_-3px_rgba(225,29,72,0.1)]" : "border-slate-200 shadow-sm hover:border-slate-300"}
       `}
@@ -158,6 +159,11 @@ export default function Home() {
     updateProjectMutation.mutate({ id: selectedProject.id, status: newStatus });
   };
 
+  const handleSelectProject = useCallback((id: string) => {
+    const p = projects.find((pr) => pr.id === id);
+    if (p) setSelectedProject(p);
+  }, [projects]);
+
   if (error) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -233,7 +239,7 @@ export default function Home() {
         ) : (
           <div className="flex gap-4 sm:gap-6 pb-6 sm:pb-8 overflow-x-auto snap-x snap-mandatory">
             {columnsData.map(({ columnId, columnProjects, totalValue, columnTitle }) => (
-              <div key={columnId} className="w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] flex-shrink-0 flex flex-col snap-center">
+              <div key={columnId} className="pipeline-column w-[280px] sm:w-[320px] min-w-[280px] sm:min-w-[320px] flex-shrink-0 flex flex-col snap-center">
                 <div className="flex items-center justify-between mb-4 px-1">
                   <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{columnTitle}</h2>
                   <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
@@ -248,7 +254,7 @@ export default function Home() {
                       isDelayed={project.daysInStatus > 14}
                       formattedValue={formatCurrency(project.value)}
                       daysShortLabel={T.daysShort}
-                      onSelect={() => setSelectedProject(project)}
+                      onSelectId={handleSelectProject}
                     />
                   ))}
                 </div>
@@ -262,6 +268,7 @@ export default function Home() {
         {selectedProject && (
           <>
             <motion.div
+              layout={false}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -270,9 +277,10 @@ export default function Home() {
                 setNewStatus("");
                 setSelectedProject(null);
               }}
-              className={`fixed inset-0 bg-slate-900/30 z-40 touch-manipulation ${isMobile ? "" : "backdrop-blur-sm"}`}
+              className="fixed inset-0 bg-slate-900/35 z-40 touch-manipulation"
             />
             <motion.div
+              layout={false}
               initial={isMobile ? { y: "100%" } : { x: "100%", opacity: 0.5 }}
               animate={isMobile ? { y: 0 } : { x: 0, opacity: 1 }}
               exit={isMobile ? { y: "100%" } : { x: "100%", opacity: 0.5 }}
@@ -286,8 +294,8 @@ export default function Home() {
                 }
               `}
             >
-              {/* Header fixo */}
-              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 p-4 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm rounded-t-2xl">
+              {/* Header fixo — sem blur para melhor perf */}
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 p-4 bg-white border-b border-slate-200 shadow-sm rounded-t-2xl">
                 <h2 className="text-base font-semibold text-slate-800 truncate min-w-0">{T.visitSheet}</h2>
                 <button
                   type="button"
